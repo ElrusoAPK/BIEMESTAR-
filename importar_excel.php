@@ -17,7 +17,7 @@ include '/config/conexion.php';
    ARCHIVO CSV
 ========================= */
 
-$archivo = '/excel/farmacias.csv';
+$archivo = '/excel/FORMATO FARMACIAS BIENESTAR VALLE DE CHALCO.csv';
 
 /* =========================
    VERIFICAR EXISTENCIA
