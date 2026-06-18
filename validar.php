@@ -1,62 +1,24 @@
 <?php
-
 session_start();
 
 include '../config/conexion.php';
 
-/* =========================
-   RECIBIR DATOS
-========================= */
-
 $usuario = $_POST['usuario'];
-
 $password = $_POST['password'];
 
-/* =========================
-   CONSULTA
-========================= */
+$query = "SELECT * FROM usuarios WHERE usuario=$1";
+$result = pg_query_params($conn, $query, array($usuario));
 
-$query = "
+$user = pg_fetch_assoc($result);
 
-SELECT *
-FROM usuarios
-WHERE usuario = $1
+if($user){
 
-";
+    if($password == $user['password']){
 
-$result = pg_query_params(
+        $_SESSION['usuario'] = $user['usuario'];
+        $_SESSION['rol'] = $user['rol'];
 
-    $conn,
-
-    $query,
-
-    array($usuario)
-
-);
-
-/* =========================
-   VALIDAR USUARIO
-========================= */
-
-if(pg_num_rows($result) > 0){
-
-    $data = pg_fetch_assoc($result);
-
-    /* =========================
-       VALIDAR PASSWORD
-    ========================= */
-
-    if($password == $data['password']){
-
-        /* =========================
-           CREAR SESION
-        ========================= */
-
-        $_SESSION['usuario'] = $usuario;
-
-        header("Location: ../dashboard.php");
-
-        exit();
+        header("Location: ../dashboard.html");
 
     }else{
 
@@ -69,5 +31,4 @@ if(pg_num_rows($result) > 0){
     echo "Usuario no encontrado";
 
 }
-
 ?>

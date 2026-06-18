@@ -1,0 +1,735 @@
+/* =========================
+ RESET GENERAL
+========================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+
+
+body{
+    background:#f4f6f9;
+    min-height:100vh;
+}
+
+
+/* =========================
+ LOGIN
+========================= */
+
+.login-container{
+
+    width:100%;
+    height:100vh;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:linear-gradient(
+    135deg,
+    #611232,
+    #8a1538
+    );
+
+}
+
+
+.login-box{
+
+    width:420px;
+
+    background:white;
+
+    padding:40px;
+
+    border-radius:25px;
+
+    box-shadow:0 10px 40px #0004;
+
+}
+
+
+.login-box h1{
+
+    text-align:center;
+    color:#611232;
+    margin-bottom:20px;
+
+}
+
+
+
+
+/* =========================
+ INPUTS
+========================= */
+
+
+.input-group{
+
+    margin-bottom:20px;
+
+}
+
+
+.input-group label{
+
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+
+}
+
+
+.input-group input{
+
+    width:100%;
+    padding:14px;
+
+    border-radius:12px;
+
+    border:1px solid #ddd;
+
+    outline:none;
+
+}
+
+
+
+.input-group input:focus{
+
+    border:2px solid #611232;
+
+}
+
+
+
+/* =========================
+ BOTONES
+========================= */
+
+
+button,
+.btn,
+.btn-agregar,
+.btn-guardar{
+
+
+    background:#611232;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 20px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+
+
+button:hover,
+.btn:hover{
+
+
+    transform:translateY(-3px);
+
+    background:#8a1538;
+
+}
+
+
+
+
+
+/* =====================
+ BOTON MENU DERECHA
+===================== */
+
+.menu-btn{
+
+position:fixed;
+
+top:12px;
+
+right:15px;
+
+left:auto;
+
+
+width:28px;
+
+height:28px;
+
+
+background:#611232;
+
+
+color:white;
+
+
+border:none;
+
+
+border-radius:7px;
+
+
+font-size:15px;
+
+
+cursor:pointer;
+
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+
+z-index:99999;
+
+
+box-shadow:0 3px 10px #0004;
+
+
+padding:0;
+
+}
+
+
+
+.menu-btn:hover{
+
+background:#8a1538;
+
+transform:scale(1.05);
+
+}
+
+
+
+
+/* =========================
+ SIDEBAR
+========================= */
+
+
+.sidebar{
+
+
+position:fixed;
+
+
+top:0;
+
+left:-260px;
+
+
+width:240px;
+
+
+height:100vh;
+
+
+background:linear-gradient(
+180deg,
+#611232,
+#8a1538
+);
+
+
+
+padding:25px;
+
+
+transition:.3s ease;
+
+
+z-index:10000;
+
+
+box-shadow:5px 0 20px #0004;
+
+
+}
+
+
+
+.sidebar.activo{
+
+left:0;
+
+}
+
+
+
+.sidebar h2{
+
+
+color:white;
+
+text-align:center;
+
+margin-bottom:35px;
+
+
+}
+
+
+
+.sidebar a{
+
+
+display:block;
+
+
+color:white;
+
+
+text-decoration:none;
+
+
+padding:13px;
+
+
+margin-bottom:12px;
+
+
+border-radius:12px;
+
+
+background:#ffffff22;
+
+
+transition:.3s;
+
+
+}
+
+
+
+.sidebar a:hover{
+
+
+background:white;
+
+color:#611232;
+
+
+}
+
+
+
+
+
+/* fondo oscuro */
+
+
+#fondo{
+
+
+position:fixed;
+
+
+top:0;
+
+left:0;
+
+
+width:100%;
+
+height:100%;
+
+
+background:#0008;
+
+
+display:none;
+
+
+z-index:9999;
+
+
+}
+
+
+
+#fondo.activo{
+
+display:block;
+
+}
+
+
+
+
+
+
+/ =========================
+ CONTENIDO
+========================= */
+
+
+.contenido{
+
+
+padding:35px;
+
+}
+
+
+
+.titulo{
+
+
+font-size:36px;
+
+color:#611232;
+
+margin-bottom:20px;
+
+
+}
+
+
+
+.subtitulo{
+
+color:#666;
+
+margin-bottom:25px;
+
+}
+
+
+
+
+
+/* =========================
+ TARJETAS
+========================= */
+
+
+.cards{
+
+
+display:grid;
+
+
+grid-template-columns:
+repeat(auto-fit,minmax(220px,1fr));
+
+
+gap:25px;
+
+
+margin-bottom:30px;
+
+
+}
+
+
+
+.card{
+
+
+background:white;
+
+
+padding:25px;
+
+
+border-radius:20px;
+
+
+box-shadow:0 8px 25px #0002;
+
+
+transition:.3s;
+
+
+}
+
+
+
+.card:hover{
+
+transform:translateY(-5px);
+
+}
+
+
+
+.card h3{
+
+color:#666;
+
+}
+
+
+
+.card p{
+
+
+font-size:40px;
+
+font-weight:bold;
+
+color:#611232;
+
+
+}
+
+
+
+
+
+
+/* =========================
+ TABLAS
+========================= */
+
+
+.table-box{
+
+
+background:white;
+
+
+border-radius:20px;
+
+
+overflow:auto;
+
+
+box-shadow:0 8px 25px #0002;
+
+
+}
+
+
+
+
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+}
+
+
+
+th{
+
+
+background:#611232;
+
+color:white;
+
+padding:15px;
+
+
+}
+
+
+
+td{
+
+
+padding:14px;
+
+border-bottom:1px solid #eee;
+
+
+}
+
+
+
+tr:hover{
+
+background:#fafafa;
+
+}
+
+
+
+
+
+
+
+/* =========================
+ FORMULARIOS
+========================= */
+
+
+.form-box{
+
+
+background:white;
+
+padding:35px;
+
+border-radius:20px;
+
+
+max-width:700px;
+
+
+box-shadow:0 8px 25px #0002;
+
+
+}
+
+
+
+.form-group{
+
+margin-bottom:20px;
+
+}
+
+
+
+.form-group input{
+
+
+width:100%;
+
+padding:14px;
+
+
+border-radius:12px;
+
+
+border:1px solid #ddd;
+
+
+}
+
+
+
+
+
+
+
+/* =========================
+ GRAFICAS
+========================= */
+
+
+.grafica-box{
+
+
+background:white;
+
+
+padding:30px;
+
+
+border-radius:20px;
+
+
+margin-top:30px;
+
+
+box-shadow:0 8px 25px #0002;
+
+
+}
+
+
+
+
+
+
+
+/* =========================
+ CRUD
+========================= */
+
+
+.btn-editar{
+
+
+background:#0d6efd;
+
+color:white;
+
+padding:8px 12px;
+
+border-radius:8px;
+
+text-decoration:none;
+
+}
+
+
+
+.btn-eliminar{
+
+
+background:#dc3545;
+
+color:white;
+
+padding:8px 12px;
+
+border-radius:8px;
+
+text-decoration:none;
+
+}
+
+
+
+
+
+
+/* =========================
+ RESPONSIVE
+========================= */
+
+
+@media(max-width:900px){
+
+
+
+.contenido{
+
+padding:20px;
+
+}
+
+
+
+.cards{
+
+grid-template-columns:1fr;
+
+}
+
+
+
+table{
+
+font-size:13px;
+
+}
+
+
+}
