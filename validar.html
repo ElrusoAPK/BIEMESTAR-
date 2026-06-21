@@ -1,0 +1,73 @@
+<?php
+
+session_start();
+
+include '../config/conexion.html';
+
+/* =========================
+   RECIBIR DATOS
+========================= */
+
+$usuario = $_POST['usuario'];
+
+$password = $_POST['password'];
+
+/* =========================
+   CONSULTA
+========================= */
+
+$query = "
+
+SELECT *
+FROM usuarios
+WHERE usuario = $1
+
+";
+
+$result = pg_query_params(
+
+    $conn,
+
+    $query,
+
+    array($usuario)
+
+);
+
+/* =========================
+   VALIDAR USUARIO
+========================= */
+
+if(pg_num_rows($result) > 0){
+
+    $data = pg_fetch_assoc($result);
+
+    /* =========================
+       VALIDAR PASSWORD
+    ========================= */
+
+    if($password == $data['password']){
+
+        /* =========================
+           CREAR SESION
+        ========================= */
+
+        $_SESSION['usuario'] = $usuario;
+
+        header("Location: ../dashboard.html");
+
+        exit();
+
+    }else{
+
+        echo "Contraseña incorrecta";
+
+    }
+
+}else{
+
+    echo "Usuario no encontrado";
+
+}
+
+?>

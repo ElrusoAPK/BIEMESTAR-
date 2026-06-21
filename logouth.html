@@ -1,0 +1,27 @@
+<?php
+
+session_start();
+
+/* =========================
+   LIMPIAR SESION
+========================= */
+
+session_unset();
+
+$_SESSION = [];
+
+/* =========================
+   DESTRUIR SESION
+========================= */
+
+session_destroy();
+
+/* =========================
+   REDIRECCION AL LOGIN
+========================= */
+
+header("Location: /BIENESTAR/index.html");
+
+exit();
+
+?>

@@ -1,0 +1,163 @@
+<?php
+
+/* =========================
+   MOSTRAR ERRORES
+========================= */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+/* =========================
+   CONEXION
+========================= */
+
+include 'config/conexion.html';
+
+/* =========================
+   ARCHIVO CSV
+========================= */
+
+$archivo = 'excel/farmacias.csv';
+
+/* =========================
+   VERIFICAR EXISTENCIA
+========================= */
+
+if(!file_exists($archivo)){
+
+    die("NO EXISTE EL ARCHIVO CSV");
+
+}
+
+/* =========================
+   ABRIR CSV
+========================= */
+
+if(($handle = fopen($archivo, "r")) !== FALSE){
+
+    /* =========================
+       SALTAR ENCABEZADOS
+    ========================= */
+
+    fgetcsv($handle, 1000, ",");
+
+    /* =========================
+       LEER FILAS
+    ========================= */
+
+    while(($data = fgetcsv($handle, 1000, ",")) !== FALSE){
+
+        /* =========================
+           VALIDAR COLUMNAS
+        ========================= */
+
+        if(count($data) < 7){
+
+            continue;
+
+        }
+
+        /* =========================
+           COLUMNAS CSV
+        ========================= */
+
+        $numero = $data[0];
+
+        $estado = $data[1];
+
+        $municipio = $data[2];
+
+        $medicamento = $data[3];
+
+        $cantidad = $data[4];
+
+        $lote = $data[5];
+
+        $fecha = $data[6];
+
+        /* =========================
+           INSERTAR
+        ========================= */
+
+        $query = "
+
+        INSERT INTO farmacias_bienestar(
+
+        numero,
+        estado,
+        municipio,
+        medicamento,
+        cantidad,
+        lote,
+        fecha_caducidad
+
+        )
+
+        VALUES(
+
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+
+        )
+
+        ";
+
+        $result = pg_query_params(
+
+            $conn,
+
+            $query,
+
+            array(
+
+                $numero,
+                $estado,
+                $municipio,
+                $medicamento,
+                $cantidad,
+                $lote,
+                $fecha
+
+            )
+
+        );
+
+        /* =========================
+           ERROR SQL
+        ========================= */
+
+        if(!$result){
+
+            echo "ERROR SQL: "
+            . pg_last_error($conn);
+
+        }
+
+    }
+
+    fclose($handle);
+
+    echo "
+
+    <h1>
+    DATOS IMPORTADOS CORRECTAMENTE
+    </h1>
+
+    <a href='dashboard.php'>
+    IR AL DASHBOARD
+    </a>
+
+    ";
+
+}else{
+
+    echo "ERROR AL LEER CSV";
+
+}
+
+?>

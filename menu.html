@@ -1,0 +1,79 @@
+<!-- BOTON HAMBURGUESA -->
+<button class="hamburger" onclick="abrirMenu()">
+☰
+</button>
+
+
+<!-- MENU -->
+
+<h2>
+BIENESTAR
+</h2>
+
+
+<a href="/BIENESTAR/dashboard.html">
+Dashboard
+</a>
+
+
+<a href="/BIENESTAR/pacientes/index.html">
+Pacientes
+</a>
+
+
+<a href="/BIENESTAR/medicamentos/index.html">
+Medicamentos
+</a>
+
+
+<a href="/BIENESTAR/reportes/index.html">
+Reportes
+</a>
+
+
+<a href="/BIENESTAR/logouth.html">
+Cerrar Sesión
+</a>
+
+
+</nav>
+
+
+<div id="fondo"
+onclick="cerrarMenu()"></div>
+
+
+
+<script>
+
+
+function abrirMenu(){
+
+
+document.getElementById("sidebar")
+.classList.add("activo");
+
+
+document.getElementById("fondo")
+.classList.add("activo");
+
+
+}
+
+
+
+function cerrarMenu(){
+
+
+document.getElementById("sidebar")
+.classList.remove("activo");
+
+
+document.getElementById("fondo")
+.classList.remove("activo");
+
+
+}
+
+
+</script>

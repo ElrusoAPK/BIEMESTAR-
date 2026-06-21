@@ -1,0 +1,1243 @@
+<?php
+
+session_start();
+
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+
+
+if(!isset($_SESSION['usuario'])){
+    header("Location:index.html");
+    exit();
+}
+
+
+include 'config/conexion.html';
+
+
+if(!$conn){
+    die("Error conexión PostgreSQL");
+}
+
+
+
+/* =========================
+   DATOS PRINCIPALES
+========================= */
+
+
+$total_registros = pg_fetch_assoc(
+pg_query($conn,"
+SELECT COUNT(*) total 
+FROM farmacias_bienestar
+")
+)['total'];
+
+
+
+$total_pacientes = pg_fetch_assoc(
+pg_query($conn,"
+SELECT COUNT(DISTINCT
+apellido_paterno_derechohabiente||
+apellido_materno_derechohabiente||
+nombres_derechohabiente
+) total
+FROM farmacias_bienestar
+")
+)['total'];
+
+
+
+$total_medicamentos = pg_fetch_assoc(
+pg_query($conn,"
+SELECT COUNT(DISTINCT medicamento) total
+FROM farmacias_bienestar
+")
+)['total'];
+
+
+
+$total_localidades = pg_fetch_assoc(
+pg_query($conn,"
+SELECT COUNT(DISTINCT localidad) total
+FROM farmacias_bienestar
+")
+)['total'];
+
+
+
+
+
+/* =========================
+ MEDICAMENTOS ESCASOS
+========================= */
+
+
+$escasos = pg_query($conn,"
+SELECT medicamento,
+COUNT(*) cantidad
+FROM farmacias_bienestar
+GROUP BY medicamento
+HAVING COUNT(*) < 20
+ORDER BY cantidad ASC
+");
+
+
+
+
+/* =========================
+ ZONA MAYOR DEMANDA
+========================= */
+
+
+$zona = pg_fetch_assoc(
+pg_query($conn,"
+SELECT localidad,
+COUNT(*) total
+FROM farmacias_bienestar
+GROUP BY localidad
+ORDER BY total DESC
+LIMIT 1
+")
+);
+
+
+
+
+
+/* =========================
+ GRAFICAS
+========================= */
+
+
+$localidades = pg_query($conn,"
+SELECT localidad,COUNT(*) total
+FROM farmacias_bienestar
+GROUP BY localidad
+ORDER BY total DESC
+LIMIT 10
+");
+
+
+
+$medicamentos = pg_query($conn,"
+SELECT medicamento,COUNT(*) total
+FROM farmacias_bienestar
+GROUP BY medicamento
+ORDER BY total DESC
+LIMIT 10
+");
+/* =========================
+   ALERTAS CRÍTICAS
+========================= */
+
+$criticos = pg_query($conn,"
+SELECT medicamento,
+COUNT(*) cantidad
+FROM farmacias_bienestar
+GROUP BY medicamento
+HAVING COUNT(*) < 10
+");
+
+$total_criticos = pg_num_rows($criticos);
+
+
+/* =========================
+   ALERTAS DE ESCASEZ
+========================= */
+
+$escasos = pg_query($conn,"
+SELECT medicamento,
+COUNT(*) cantidad
+FROM farmacias_bienestar
+GROUP BY medicamento
+HAVING COUNT(*) < 20
+");
+
+$total_escasos = pg_num_rows($escasos);
+
+
+/* =========================
+   ZONA CRÍTICA
+========================= */
+
+$zona_critica = pg_fetch_assoc(
+pg_query($conn,"
+SELECT localidad,
+COUNT(*) total
+FROM farmacias_bienestar
+GROUP BY localidad
+ORDER BY total DESC
+LIMIT 1
+")
+);
+
+if(!$zona_critica){
+
+    $zona_critica = [
+        'localidad' => 'Sin datos',
+        'total' => 0
+    ];
+
+}
+/* =====================================
+   FECHA ACTUAL
+===================================== */
+
+date_default_timezone_set('America/Mexico_City');
+
+setlocale(LC_TIME, 'es_ES.UTF-8', 'Spanish_Spain', 'es_MX.UTF-8');
+
+$fecha_actual = date('d/m/Y');
+
+/* =====================================
+   MEDICAMENTO MÁS SOLICITADO
+===================================== */
+
+$top_medicamento = pg_fetch_assoc(
+    pg_query($conn,"
+    SELECT medicamento,
+           COUNT(*) total
+    FROM farmacias_bienestar
+    GROUP BY medicamento
+    ORDER BY total DESC
+    LIMIT 1
+")
+);
+
+if(!$top_medicamento){
+
+    $top_medicamento = [
+        'medicamento' => 'Sin datos',
+        'total' => 0
+    ];
+
+}
+
+/* =====================================
+   INDICE DE ABASTECIMIENTO
+===================================== */
+
+$indice_abastecimiento = 100;
+
+if($total_medicamentos > 0){
+
+    $indice_abastecimiento = round(
+        (($total_medicamentos - $total_escasos)
+        /
+        $total_medicamentos) * 100
+    );
+
+}
+
+/* =====================================
+   NIVEL DE RIESGO
+===================================== */
+
+if($indice_abastecimiento >= 90){
+
+    $nivel_riesgo = "BAJO";
+    $color_riesgo = "success";
+
+}
+elseif($indice_abastecimiento >= 70){
+
+    $nivel_riesgo = "MEDIO";
+    $color_riesgo = "warning";
+
+}
+else{
+
+    $nivel_riesgo = "ALTO";
+    $color_riesgo = "danger";
+
+}
+
+/* =====================================
+   MOTOR DE HALLAZGOS AUTOMÁTICOS
+===================================== */
+
+if($indice_abastecimiento >= 90){
+
+    $hallazgo = "El sistema presenta un nivel óptimo de abastecimiento y cobertura farmacéutica.";
+
+}
+elseif($indice_abastecimiento >= 70){
+
+    $hallazgo = "Se detectan señales moderadas de presión sobre el inventario. Se recomienda monitoreo preventivo.";
+
+}
+else{
+
+    $hallazgo = "Se detecta riesgo alto de desabasto. Es necesario implementar acciones correctivas de abastecimiento.";
+
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>
+Sistema Inteligente de Análisis y Visualización de Datos
+</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+:root{
+
+    --guinda:#611232;
+    --guinda2:#8a1538;
+    --gris:#f4f6f9;
+    --blanco:#ffffff;
+
+}
+
+body{
+
+    background:var(--gris);
+    font-family:'Segoe UI',sans-serif;
+
+}
+
+/* ==============================
+   MENU
+============================== */
+
+.menu-btn{
+
+    position:fixed;
+    top:12px;
+    right:15px;
+
+    width:38px;
+    height:38px;
+
+    border:none;
+    border-radius:10px;
+
+    background:var(--guinda);
+    color:white;
+
+    z-index:99999;
+
+    box-shadow:0 4px 15px rgba(0,0,0,.25);
+
+}
+
+.sidebar{
+
+    position:fixed;
+
+    top:0;
+    right:-270px;
+
+    width:250px;
+    height:100vh;
+
+    background:var(--guinda);
+
+    padding:60px 20px;
+
+    transition:.3s;
+
+    z-index:99998;
+
+}
+
+.sidebar.activo{
+
+    right:0;
+
+}
+
+.sidebar h2{
+
+    color:white;
+    text-align:center;
+    margin-bottom:30px;
+
+}
+
+.sidebar a{
+
+    display:block;
+
+    padding:12px;
+
+    margin-bottom:12px;
+
+    border-radius:10px;
+
+    background:#ffffff20;
+
+    color:white;
+
+    text-decoration:none;
+
+    transition:.3s;
+
+}
+
+.sidebar a:hover{
+
+    background:white;
+    color:var(--guinda);
+
+}
+
+#fondo{
+
+    position:fixed;
+
+    width:100%;
+    height:100%;
+
+    background:#0008;
+
+    display:none;
+
+    z-index:99997;
+
+}
+
+#fondo.activo{
+
+    display:block;
+
+}
+
+/* ==============================
+   CONTENIDO
+============================== */
+
+.contenedor{
+
+    padding:30px;
+    padding-top:65px;
+
+}
+
+/* ==============================
+   BANNER
+============================== */
+
+.banner{
+
+    background:linear-gradient(
+        135deg,
+        #611232,
+        #8a1538
+    );
+
+    color:white;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    margin-bottom:25px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+
+}
+
+.banner h1{
+
+    font-size:32px;
+    font-weight:700;
+
+}
+
+.banner p{
+
+    margin-top:10px;
+    opacity:.95;
+
+}
+
+/* ==============================
+   KPI CARDS
+============================== */
+
+.kpi{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    height:100%;
+
+}
+
+.kpi:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.kpi .icono{
+
+    font-size:30px;
+
+    color:var(--guinda);
+
+}
+
+.kpi h5{
+
+    margin-top:15px;
+    color:#666;
+
+}
+
+.kpi h2{
+
+    color:var(--guinda);
+    font-weight:700;
+
+}
+
+/* ==============================
+   ALERTAS
+============================== */
+
+.alerta-box{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+    height:100%;
+
+}
+
+.alerta-box h4{
+
+    color:var(--guinda);
+
+    margin-bottom:20px;
+
+}
+
+/* ==============================
+   PANEL EJECUTIVO
+============================== */
+
+.ejecutivo{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+    height:100%;
+
+}
+
+.ejecutivo h4{
+
+    color:var(--guinda);
+
+    margin-bottom:20px;
+
+}
+
+.indicador{
+
+    padding:15px;
+
+    background:#f8f9fa;
+
+    border-radius:12px;
+
+    margin-bottom:12px;
+
+}
+
+.footer{
+
+    text-align:center;
+
+    margin-top:30px;
+
+    padding:20px;
+
+    color:#777;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- MENU -->
+
+<button class="menu-btn"
+onclick="abrirMenu()">
+☰
+</button>
+
+<div id="fondo"
+onclick="cerrarMenu()">
+</div>
+
+<div class="sidebar"
+id="sidebar">
+
+<h2>
+BIENESTAR
+</h2>
+
+<a href="dashboard.html">
+<i class="fa-solid fa-chart-line"></i>
+ Dashboard
+</a>
+
+<a href="pacientes/index.html">
+<i class="fa-solid fa-users"></i>
+ Pacientes
+</a>
+
+<a href="medicamentos/index.html">
+<i class="fa-solid fa-capsules"></i>
+ Medicamentos
+</a>
+
+<a href="reportes/index.html">
+<i class="fa-solid fa-file-lines"></i>
+ Reportes
+</a>
+
+<a href="logouth.html">
+<i class="fa-solid fa-right-from-bracket"></i>
+ Salir
+</a>
+
+</div>
+
+<div class="contenedor">
+
+<div class="banner">
+
+<h1>
+Sistema Inteligente de Análisis y Visualización de Datos
+</h1>
+
+<p>
+
+Proyecto de Titulación enfocado en el análisis,
+visualización y monitoreo del abastecimiento de
+medicamentos en Farmacias Bienestar.
+
+</p>
+
+<p>
+
+Fecha:
+<strong><?=$fecha_actual?></strong>
+
+</p>
+
+</div>
+
+<!-- KPIs -->
+
+<div class="row g-4">
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi">
+
+<div class="icono">
+<i class="fa-solid fa-database"></i>
+</div>
+
+<h5>Registros</h5>
+
+<h2><?=$total_registros?></h2>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi">
+
+<div class="icono">
+<i class="fa-solid fa-users"></i>
+</div>
+
+<h5>Pacientes</h5>
+
+<h2><?=$total_pacientes?></h2>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi">
+
+<div class="icono">
+<i class="fa-solid fa-capsules"></i>
+</div>
+
+<h5>Medicamentos</h5>
+
+<h2><?=$total_medicamentos?></h2>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi">
+
+<div class="icono">
+<i class="fa-solid fa-location-dot"></i>
+</div>
+
+<h5>Localidades</h5>
+
+<h2><?=$total_localidades?></h2>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ALERTAS + PANEL EJECUTIVO -->
+
+<div class="row mt-4">
+
+<div class="col-lg-6">
+
+<div class="alerta-box">
+
+<h4>
+Centro de Alertas Inteligentes
+</h4>
+
+<div class="alert alert-danger">
+
+Medicamentos Críticos:
+
+<strong>
+<?=$total_criticos?>
+</strong>
+
+</div>
+
+<div class="alert alert-warning">
+
+Medicamentos Escasos:
+
+<strong>
+<?=$total_escasos?>
+</strong>
+
+</div>
+
+<div class="alert alert-info">
+
+Zona de Mayor Demanda:
+
+<strong>
+<?=$zona_critica['localidad']?>
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-6">
+
+<div class="ejecutivo">
+
+<h4>
+Panel Ejecutivo
+</h4>
+
+<div class="indicador">
+
+Medicamento más solicitado:
+
+<strong>
+<?=$top_medicamento['medicamento']?>
+</strong>
+
+</div>
+
+<div class="indicador">
+
+Solicitudes:
+
+<strong>
+<?=$top_medicamento['total']?>
+</strong>
+
+</div>
+
+<div class="indicador">
+
+Índice de abastecimiento:
+
+<strong>
+<?=$indice_abastecimiento?>%
+</strong>
+
+</div>
+
+<div class="indicador">
+
+Nivel de riesgo:
+
+<span class="badge bg-<?=$color_riesgo?>">
+<?=$nivel_riesgo?>
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<!-- =====================================
+     GRAFICAS EJECUTIVAS
+===================================== -->
+
+<div class="row mt-4">
+
+    <div class="col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <h5 class="text-center mb-4">
+                    Top 10 Localidades con Mayor Demanda
+                </h5>
+
+                <canvas id="grafLocalidades"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <h5 class="text-center mb-4">
+                    Top 10 Medicamentos Solicitados
+                </h5>
+
+                <canvas id="grafMedicamentos"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="row mt-4">
+
+    <div class="col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <h5 class="text-center mb-4">
+                    Distribución por Municipio
+                </h5>
+
+                <canvas id="grafMunicipios"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <h5 class="text-center mb-4">
+                    Índice de Abastecimiento
+                </h5>
+
+                <canvas id="grafAbasto"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================
+     HALLAZGOS AUTOMÁTICOS
+===================================== -->
+
+<div class="card border-0 shadow-sm mt-4">
+
+    <div class="card-body">
+
+        <h4 class="text-primary mb-3">
+
+            🤖 Hallazgos Automáticos
+
+        </h4>
+
+        <ul class="list-group">
+
+            <li class="list-group-item">
+
+                <?=$hallazgo?>
+
+            </li>
+
+            <li class="list-group-item">
+
+                Se detectaron
+
+                <strong><?=$total_escasos?></strong>
+
+                medicamentos con riesgo de escasez.
+
+            </li>
+
+            <li class="list-group-item">
+
+                El medicamento con mayor demanda es
+
+                <strong>
+
+                    <?=$top_medicamento['medicamento']?>
+
+                </strong>
+
+                con
+
+                <strong>
+
+                    <?=$top_medicamento['total']?>
+
+                </strong>
+
+                registros.
+
+            </li>
+
+            <li class="list-group-item">
+
+                El índice actual de abastecimiento es de
+
+                <strong>
+
+                    <?=$indice_abastecimiento?>%
+
+                </strong>
+
+            </li>
+
+            <li class="list-group-item">
+
+                Nivel de riesgo operativo:
+
+                <span class="badge bg-<?=$color_riesgo?>">
+
+                    <?=$nivel_riesgo?>
+
+                </span>
+
+            </li>
+
+        </ul>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================
+     FOOTER
+===================================== -->
+
+<div class="footer">
+
+    <hr>
+
+    <strong>
+
+        Sistema Inteligente para el Análisis y Visualización de Datos
+        de Farmacias Bienestar
+
+    </strong>
+
+    <br>
+
+    Proyecto de Titulación |
+    Ingeniería Informatica
+
+    <br>
+
+    PostgreSQL · PHP · Bootstrap 5 · Chart.js
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================
+     MENU JS
+===================================== -->
+
+<script>
+
+function abrirMenu(){
+
+    document
+    .getElementById("sidebar")
+    .classList
+    .add("activo");
+
+    document
+    .getElementById("fondo")
+    .classList
+    .add("activo");
+
+}
+
+function cerrarMenu(){
+
+    document
+    .getElementById("sidebar")
+    .classList
+    .remove("activo");
+
+    document
+    .getElementById("fondo")
+    .classList
+    .remove("activo");
+
+}
+
+</script>
+
+
+
+<!-- =====================================
+     GRAFICA LOCALIDADES
+===================================== -->
+
+<script>
+
+new Chart(
+document.getElementById('grafLocalidades'),
+{
+
+type:'bar',
+
+data:{
+
+labels:<?=$jsonLocalidades?>,
+
+datasets:[{
+
+label:'Solicitudes',
+
+data:<?=$jsonDatosLocalidades?>,
+
+backgroundColor:'#611232',
+
+borderRadius:8
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+legend:{
+display:false
+}
+}
+
+}
+
+});
+
+</script>
+
+
+
+<!-- =====================================
+     GRAFICA MEDICAMENTOS
+===================================== -->
+
+<script>
+
+new Chart(
+document.getElementById('grafMedicamentos'),
+{
+
+type:'doughnut',
+
+data:{
+
+labels:<?=$jsonMedicamentos?>,
+
+datasets:[{
+
+data:<?=$jsonDatosMedicamentos?>
+
+}]
+
+},
+
+options:{
+responsive:true
+}
+
+});
+
+</script>
+
+
+
+<!-- =====================================
+     GRAFICA MUNICIPIOS
+===================================== -->
+
+<script>
+
+new Chart(
+document.getElementById('grafMunicipios'),
+{
+
+type:'pie',
+
+data:{
+
+labels:<?=$jsonMunicipios?>,
+
+datasets:[{
+
+data:<?=$jsonDatosMunicipios?>
+
+}]
+
+},
+
+options:{
+responsive:true
+}
+
+});
+
+</script>
+
+
+
+<!-- =====================================
+     GRAFICA ABASTECIMIENTO
+===================================== -->
+
+<script>
+
+new Chart(
+document.getElementById('grafAbasto'),
+{
+
+type:'doughnut',
+
+data:{
+
+labels:[
+'Abastecido',
+'Escasez'
+],
+
+datasets:[{
+
+data:[
+<?=$indice_abastecimiento?>,
+<?=100-$indice_abastecimiento?>
+]
+
+}]
+
+},
+
+options:{
+responsive:true
+}
+
+});
+
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
